@@ -195,7 +195,7 @@ export default function Home() {
         </nav>
         <button className="syncButton" onClick={forceSync} disabled={syncing}>
           <span className={syncing ? "spin" : ""}>↻</span>
-          {syncing ? "동기화 중" : "오늘 환율 동기화"}
+          {syncing ? "동기화 중" : "당일 환율 동기화"}
         </button>
       </header>
 
@@ -203,7 +203,7 @@ export default function Home() {
         <div>
           <div className="eyebrow"><span /> DAILY CURRENCY INTELLIGENCE</div>
           <h1>오늘의 환율을 읽고,<br /><em>내일의 흐름</em>을 준비하세요.</h1>
-          <p>전 세계 통화의 일별 환율을 한곳에 쌓고 비교합니다.<br />Open Exchange Rates 기반, 매일 자동 업데이트.</p>
+          <p>전 세계 통화의 일별 환율을 한곳에 쌓고 비교합니다.<br />Open Exchange Rates 기반, 매일 오전 9시 5분 자동 업데이트.</p>
         </div>
         <div className="heroOrb" aria-hidden="true">
           <div className="orbit orbitOne"><i>€</i></div>
@@ -402,7 +402,7 @@ export default function Home() {
           {!loading && rows.length === 0 && (
             <div className="emptyTable">
               <strong>{query ? "검색 결과가 없습니다." : "첫 환율 데이터를 기다리고 있습니다."}</strong>
-              <span>{query ? "다른 통화명이나 코드를 입력해보세요." : "API 연결 후 ‘오늘 환율 동기화’를 눌러주세요."}</span>
+              <span>{query ? "다른 통화명이나 코드를 입력해보세요." : "오전 9시 5분 이후 ‘당일 환율 동기화’를 눌러주세요."}</span>
             </div>
           )}
           {loading && <div className="loadingLine" />}

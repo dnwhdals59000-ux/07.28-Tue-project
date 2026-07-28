@@ -16,8 +16,9 @@ function runtimeEnv() {
 }
 
 export class RatesConfigurationError extends Error {}
+export class RatesTooEarlyError extends Error {}
 
-export async function syncLatestRates(force = false) {
+export async function syncLatestRates(source: "scheduled" | "manual" = "manual") {
   const { DB, OPEN_EXCHANGE_RATES_APP_ID } = runtimeEnv();
   if (!OPEN_EXCHANGE_RATES_APP_ID) {
     throw new RatesConfigurationError(
@@ -25,17 +26,25 @@ export async function syncLatestRates(force = false) {
     );
   }
 
-  const utcDate = new Date().toISOString().slice(0, 10);
-  if (!force) {
-    const saved = await DB.prepare(
-      "SELECT COUNT(*) AS count FROM daily_rates WHERE rate_date = ?",
-    )
-      .bind(utcDate)
-      .first<{ count: number }>();
+  const now = new Date();
+  const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const rateDate = kstNow.toISOString().slice(0, 10);
+  const minutesSinceMidnight = kstNow.getUTCHours() * 60 + kstNow.getUTCMinutes();
 
-    if ((saved?.count ?? 0) > 0) {
-      return { date: utcDate, count: saved?.count ?? 0, cached: true };
-    }
+  if (minutesSinceMidnight < 9 * 60 + 5) {
+    throw new RatesTooEarlyError(
+      "당일 환율은 한국시간 오전 9시 5분 이후에 동기화할 수 있습니다.",
+    );
+  }
+
+  const saved = await DB.prepare(
+    "SELECT COUNT(*) AS count FROM daily_rates WHERE rate_date = ?",
+  )
+    .bind(rateDate)
+    .first<{ count: number }>();
+
+  if ((saved?.count ?? 0) > 0) {
+    return { date: rateDate, count: saved?.count ?? 0, cached: true };
   }
 
   const response = await fetch(
@@ -49,7 +58,6 @@ export async function syncLatestRates(force = false) {
   }
 
   const payload = (await response.json()) as OpenExchangeResponse;
-  const rateDate = new Date(payload.timestamp * 1000).toISOString().slice(0, 10);
   const collectedAt = new Date().toISOString();
   const entries = Object.entries(payload.rates).filter(
     ([currency, rate]) => /^[A-Z0-9]{3,8}$/.test(currency) && Number.isFinite(rate),
@@ -82,7 +90,7 @@ export async function syncLatestRates(force = false) {
       (rate_date, status, currency_count, message, created_at)
      VALUES (?, 'success', ?, ?, ?)`,
   )
-    .bind(rateDate, entries.length, force ? "manual" : "daily", collectedAt)
+    .bind(rateDate, entries.length, source, collectedAt)
     .run();
 
   return { date: rateDate, count: entries.length, cached: false };
