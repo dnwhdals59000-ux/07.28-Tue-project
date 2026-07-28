@@ -1,98 +1,85 @@
-# vinext-starter
+# 07.28(화) 프로젝트 — Global FX Daily
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+전 세계 통화의 환율을 매일 수집·누적하고 KRW 기준으로 비교하는 공개 환율 대시보드입니다.
 
-## Prerequisites
+**Live:** [https://global-fx-daily.kpc55.chatgpt.site](https://global-fx-daily.kpc55.chatgpt.site)
 
-- Node.js `>=22.13.0`
+![Global FX Daily](public/og.png)
 
-## Quick Start
+## 주요 기능
+
+- Open Exchange Rates 기반 전 세계 172개 통화 조회
+- 매일 오전 9시 5분(한국시간) 자동 환율 적재
+- 당일 자동 적재 누락 시 수동 동기화
+- USD·KRW 기준 환율 전환
+- 전일 대비 변동률 및 기간별 추세
+- 환율 계산기
+- 통화명·통화코드 검색
+- 날짜별 Excel 호환 CSV 다운로드
+- Cloudflare D1 기반 일별 데이터 영구 보관
+- 로그인 없는 공개 웹사이트
+
+## 기술 구성
+
+- Next.js 16 / React 19
+- vinext / Vite
+- Cloudflare Workers
+- Cloudflare D1
+- Drizzle ORM
+- Open Exchange Rates API
+- OpenAI Sites 배포
+
+## 로컬 실행
+
+Node.js 22.13 이상이 필요합니다.
 
 ```bash
 npm install
 npm run dev
+```
+
+로컬 환경변수 파일 `.env.local`을 만들고 다음 값을 설정합니다.
+
+```env
+OPEN_EXCHANGE_RATES_APP_ID=YOUR_APP_ID
+```
+
+실제 App ID는 GitHub에 커밋하지 않습니다. `.env*` 파일은 `.gitignore`에 등록되어 있습니다.
+
+## 검증
+
+```bash
+npm run lint
 npm run build
 ```
 
-This starter does not use `wrangler.jsonc`.
+## 문서
 
-## Included Shape
+- [제품 요구사항](docs/PRD.md)
+- [운영 및 API 가이드](docs/OPERATIONS.md)
+- [2026-07-28 작업 내역](docs/CHANGELOG-2026-07-28.md)
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+## 주요 경로
 
-## Workspace Auth Headers
-
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```text
+app/page.tsx                  대시보드 화면
+app/globals.css               반응형 디자인
+app/api/rates/route.ts        환율 조회 API
+app/api/rates/sync/route.ts   당일 환율 동기화 API
+app/api/rates/export/route.ts Excel 호환 CSV 다운로드 API
+lib/rates.ts                  외부 API 수집 및 저장 로직
+db/schema.ts                  D1 데이터베이스 스키마
+drizzle/                      데이터베이스 마이그레이션
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+## 데이터 기준
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+- 자동 적재 시각: 매일 오전 9시 5분, Asia/Seoul
+- 기준통화: API 원본은 USD
+- KRW 환율: USD 기준 교차환율로 계산
+- 무료 API 갱신 주기: 1시간
+- 이미 저장된 당일 값은 수동 동기화로 덮어쓰지 않음
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+## 주의사항
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
-
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+표시되는 환율은 참고용 중간환율이며 은행·카드사·송금사의 실제 적용환율 및 수수료와 다를 수 있습니다.
