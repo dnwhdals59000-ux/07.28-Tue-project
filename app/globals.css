@@ -223,6 +223,8 @@ td code {
 footer { padding: 24px clamp(24px, 6vw, 88px); display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 10px; border-top: 1px solid #323e36; background: var(--ink); }
 footer .brand { color: white; font-size: 14px; }
 footer .brandMark { background: white; color: var(--ink); width: 27px; height: 27px; border-radius: 8px; }
+footer .sourceLink { color: #d9f96b; text-decoration: underline; text-underline-offset: 3px; }
+footer .sourceLink:hover { color: white; }
 
 @media (max-width: 900px) {
   nav { display: none; }

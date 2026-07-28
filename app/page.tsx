@@ -421,7 +421,7 @@ export default function Home() {
 
       <footer>
         <div className="brand"><span className="brandMark">G</span><span>Global FX <b>Daily</b></span></div>
-        <p>환율 데이터 제공: Open Exchange Rates · UTC 일별 기준</p>
+        <p>환율 데이터 제공: <a className="sourceLink" href="https://openexchangerates.org/" target="_blank" rel="noreferrer">Open Exchange Rates</a> · UTC 일별 기준</p>
         <span>© 2026 Global FX Daily</span>
       </footer>
     </main>
