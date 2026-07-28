@@ -181,7 +181,7 @@ select { border: 1px solid var(--line); border-radius: 8px; background: #fafbf8;
 table { width: 100%; border-collapse: collapse; }
 th { text-align: left; padding: 14px 18px; background: #fafbf8; color: var(--muted); font-size: 10px; letter-spacing: .05em; border-bottom: 1px solid var(--line); }
 td { padding: 14px 18px; border-bottom: 1px solid #edf0eb; font-size: 12px; font-variant-numeric: tabular-nums; }
-th:nth-child(2), td:nth-child(2) { width: 150px; text-align: center; }
+th:nth-child(2), td:nth-child(2) { width: 116px; text-align: center; }
 th:nth-child(2) {
   color: var(--green);
   font-size: 11px;
@@ -191,7 +191,7 @@ th:nth-child(2) {
 tbody tr:hover { background: #fbfdef; }
 td:first-child { display: flex; align-items: center; gap: 10px; }
 td code {
-  min-width: 66px;
+  min-width: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -199,13 +199,13 @@ td code {
   background: var(--ink);
   color: var(--lime);
   border: 1px solid #314139;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: .08em;
+  padding: 6px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
   line-height: 1;
-  box-shadow: 0 3px 9px rgba(24, 34, 28, .12);
+  box-shadow: 0 2px 5px rgba(24, 34, 28, .08);
 }
 .emptyTable { min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--muted); }
 .emptyTable strong { color: var(--ink); font-size: 14px; }
