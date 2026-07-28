@@ -73,6 +73,7 @@ export default function Home() {
   const [amount, setAmount] = useState("1000");
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [toCurrency, setToCurrency] = useState("KRW");
+  const [downloadDate, setDownloadDate] = useState("");
 
   const loadRates = useCallback(async () => {
     setLoading(true);
@@ -161,6 +162,7 @@ export default function Home() {
   }, [chartData]);
 
   const availableCurrencies = snapshot?.latest.map((item) => item.currency) ?? [];
+  const selectedDownloadDate = downloadDate || snapshot?.latestDate || "";
   const calculated = useMemo(() => {
     const numericAmount = Number(amount.replaceAll(",", ""));
     const fromRate = latestMap.get(fromCurrency);
@@ -347,10 +349,33 @@ export default function Home() {
             <h2>전 세계 통화</h2>
             <p>저장된 모든 통화를 검색하고 전일 대비 변화를 확인하세요.</p>
           </div>
-          <label className="search">
-            <span>⌕</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="통화명 또는 코드 검색" aria-label="통화 검색" />
-          </label>
+          <div className="currencyActions">
+            <label className="search">
+              <span>⌕</span>
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="통화명 또는 코드 검색" aria-label="통화 검색" />
+            </label>
+            <div className="downloadControls">
+              <label>
+                다운로드 기준일
+                <input
+                  type="date"
+                  value={selectedDownloadDate}
+                  min={snapshot?.stats.first_date ?? undefined}
+                  max={snapshot?.stats.last_date ?? undefined}
+                  onChange={(event) => setDownloadDate(event.target.value)}
+                />
+              </label>
+              <a
+                className={`excelButton${selectedDownloadDate ? "" : " disabled"}`}
+                href={selectedDownloadDate ? `/api/rates/export?date=${selectedDownloadDate}` : "#currencies"}
+                download
+                aria-disabled={!selectedDownloadDate}
+              >
+                <span>↓</span>
+                엑셀 다운로드
+              </a>
+            </div>
+          </div>
         </div>
         <div className="tableWrap">
           <table>
