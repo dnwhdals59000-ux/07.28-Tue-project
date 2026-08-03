@@ -75,6 +75,8 @@ export default function Home() {
   const [toCurrency, setToCurrency] = useState("KRW");
   const [rangeFrom, setRangeFrom] = useState("");
   const [rangeTo, setRangeTo] = useState("");
+  const [rangeApplied, setRangeApplied] = useState(true);
+  const [rangeError, setRangeError] = useState("");
 
   const loadRates = useCallback(async () => {
     setLoading(true);
@@ -163,6 +165,29 @@ export default function Home() {
   const availableCurrencies = snapshot?.latest.map((item) => item.currency) ?? [];
   const selectedRangeFrom = rangeFrom || snapshot?.stats.first_date || "";
   const selectedRangeTo = rangeTo || snapshot?.stats.last_date || "";
+
+  function updateRange(setter: (value: string) => void, value: string) {
+    setter(value);
+    setRangeApplied(false);
+    setRangeError("");
+  }
+
+  function applyRange() {
+    if (!selectedRangeFrom || !selectedRangeTo || selectedRangeFrom > selectedRangeTo) {
+      setRangeError("시작일과 종료일을 올바르게 선택해주세요.");
+      setRangeApplied(false);
+      return;
+    }
+    const start = Date.parse(`${selectedRangeFrom}T00:00:00Z`);
+    const end = Date.parse(`${selectedRangeTo}T00:00:00Z`);
+    if (end - start > 30 * 24 * 60 * 60 * 1000) {
+      setRangeError("다운로드 범위는 최대 1개월까지 선택할 수 있습니다.");
+      setRangeApplied(false);
+      return;
+    }
+    setRangeError("");
+    setRangeApplied(true);
+  }
   const calculated = useMemo(() => {
     const numericAmount = Number(amount.replaceAll(",", ""));
     const fromRate = latestMap.get(fromCurrency);
@@ -363,7 +388,7 @@ export default function Home() {
                     value={selectedRangeFrom}
                     min={snapshot?.stats.first_date ?? undefined}
                     max={selectedRangeTo || snapshot?.stats.last_date || undefined}
-                    onChange={(event) => setRangeFrom(event.target.value)}
+                    onChange={(event) => updateRange(setRangeFrom, event.target.value)}
                     aria-label="다운로드 시작일"
                   />
                   <span>~</span>
@@ -372,34 +397,26 @@ export default function Home() {
                     value={selectedRangeTo}
                     min={selectedRangeFrom || snapshot?.stats.first_date || undefined}
                     max={snapshot?.stats.last_date ?? undefined}
-                    onChange={(event) => setRangeTo(event.target.value)}
+                    onChange={(event) => updateRange(setRangeTo, event.target.value)}
                     aria-label="다운로드 종료일"
                   />
                 </div>
               </label>
               <a
-                className={`excelButton${selectedRangeTo ? "" : " disabled"}`}
-                href={selectedRangeTo ? `/api/rates/export?date=${selectedRangeTo}` : "#currencies"}
+                className={`excelButton${rangeApplied && selectedRangeFrom && selectedRangeTo ? "" : " disabled"}`}
+                href={rangeApplied && selectedRangeFrom && selectedRangeTo
+                  ? `/api/rates/export?range=custom&from=${selectedRangeFrom}&to=${selectedRangeTo}`
+                  : "#currencies"}
                 download
-                aria-disabled={!selectedRangeTo}
-                title="종료일 기준 환율 다운로드"
+                aria-disabled={!rangeApplied || !selectedRangeFrom || !selectedRangeTo}
+                title="선택한 기간의 누적 환율 다운로드"
               >
                 <span>↓</span>
                 엑셀 다운로드
               </a>
-              <a
-                className={`excelButton monthButton${selectedRangeFrom && selectedRangeTo ? "" : " disabled"}`}
-                href={selectedRangeFrom && selectedRangeTo
-                  ? `/api/rates/export?range=custom&from=${selectedRangeFrom}&to=${selectedRangeTo}`
-                  : "#currencies"}
-                download
-                aria-disabled={!selectedRangeFrom || !selectedRangeTo}
-                title="선택한 기간의 일별 환율을 한 번에 다운로드"
-              >
-                <span>↓</span>
-                기간 다운로드
-              </a>
+              <button className="queryButton" type="button" onClick={applyRange}>조회</button>
             </div>
+            {rangeError && <p className="rangeError" role="alert">{rangeError}</p>}
           </div>
         </div>
         <div className="tableWrap">
