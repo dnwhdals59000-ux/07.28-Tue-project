@@ -73,7 +73,8 @@ export default function Home() {
   const [amount, setAmount] = useState("1000");
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [toCurrency, setToCurrency] = useState("KRW");
-  const [downloadDate, setDownloadDate] = useState("");
+  const [rangeFrom, setRangeFrom] = useState("");
+  const [rangeTo, setRangeTo] = useState("");
 
   const loadRates = useCallback(async () => {
     setLoading(true);
@@ -160,7 +161,8 @@ export default function Home() {
   }, [chartData]);
 
   const availableCurrencies = snapshot?.latest.map((item) => item.currency) ?? [];
-  const selectedDownloadDate = downloadDate || snapshot?.latestDate || "";
+  const selectedRangeFrom = rangeFrom || snapshot?.stats.first_date || "";
+  const selectedRangeTo = rangeTo || snapshot?.stats.last_date || "";
   const calculated = useMemo(() => {
     const numericAmount = Number(amount.replaceAll(",", ""));
     const fromRate = latestMap.get(fromCurrency);
@@ -353,33 +355,49 @@ export default function Home() {
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="통화명 또는 코드 검색" aria-label="통화 검색" />
             </label>
             <div className="downloadControls">
-              <label>
-                다운로드 기준일
-                <input
-                  type="date"
-                  value={selectedDownloadDate}
-                  min={snapshot?.stats.first_date ?? undefined}
-                  max={snapshot?.stats.last_date ?? undefined}
-                  onChange={(event) => setDownloadDate(event.target.value)}
-                />
+              <label className="rangeLabel">
+                <span>다운로드 기준일</span>
+                <div className="rangeInputs">
+                  <input
+                    type="date"
+                    value={selectedRangeFrom}
+                    min={snapshot?.stats.first_date ?? undefined}
+                    max={selectedRangeTo || snapshot?.stats.last_date || undefined}
+                    onChange={(event) => setRangeFrom(event.target.value)}
+                    aria-label="다운로드 시작일"
+                  />
+                  <span>~</span>
+                  <input
+                    type="date"
+                    value={selectedRangeTo}
+                    min={selectedRangeFrom || snapshot?.stats.first_date || undefined}
+                    max={snapshot?.stats.last_date ?? undefined}
+                    onChange={(event) => setRangeTo(event.target.value)}
+                    aria-label="다운로드 종료일"
+                  />
+                </div>
               </label>
               <a
-                className={`excelButton${selectedDownloadDate ? "" : " disabled"}`}
-                href={selectedDownloadDate ? `/api/rates/export?date=${selectedDownloadDate}` : "#currencies"}
+                className={`excelButton${selectedRangeTo ? "" : " disabled"}`}
+                href={selectedRangeTo ? `/api/rates/export?date=${selectedRangeTo}` : "#currencies"}
                 download
-                aria-disabled={!selectedDownloadDate}
+                aria-disabled={!selectedRangeTo}
+                title="종료일 기준 환율 다운로드"
               >
                 <span>↓</span>
                 엑셀 다운로드
               </a>
               <a
-                className="excelButton monthButton"
-                href="/api/rates/export?range=month"
+                className={`excelButton monthButton${selectedRangeFrom && selectedRangeTo ? "" : " disabled"}`}
+                href={selectedRangeFrom && selectedRangeTo
+                  ? `/api/rates/export?range=custom&from=${selectedRangeFrom}&to=${selectedRangeTo}`
+                  : "#currencies"}
                 download
-                title="최근 30일간 저장된 일별 환율을 한 번에 다운로드"
+                aria-disabled={!selectedRangeFrom || !selectedRangeTo}
+                title="선택한 기간의 일별 환율을 한 번에 다운로드"
               >
                 <span>↓</span>
-                최근 1개월
+                기간 다운로드
               </a>
             </div>
           </div>

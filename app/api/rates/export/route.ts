@@ -25,7 +25,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const range = url.searchParams.get("range");
 
-  if (range === "month") {
+  if (range === "month" || range === "custom") {
     const latestDate = (
       await DB.prepare("SELECT MAX(rate_date) AS rate_date FROM daily_rates")
         .first<{ rate_date: string | null }>()
@@ -38,13 +38,37 @@ export async function GET(request: Request) {
       );
     }
 
+    const requestedFrom = url.searchParams.get("from");
+    const requestedTo = url.searchParams.get("to");
+    const isDate = (value: string | null): value is string =>
+      Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value));
+    const fromDate = isDate(requestedFrom)
+      ? requestedFrom
+      : new Date(`${latestDate}T00:00:00Z`);
+    const toDate = isDate(requestedTo) ? requestedTo : latestDate;
+
+    if (typeof fromDate !== "string") {
+      fromDate.setUTCDate(fromDate.getUTCDate() - 30);
+    }
+    const fromValue = typeof fromDate === "string"
+      ? fromDate
+      : fromDate.toISOString().slice(0, 10);
+    const fromTime = Date.parse(`${fromValue}T00:00:00Z`);
+    const toTime = Date.parse(`${toDate}T00:00:00Z`);
+    if (!Number.isFinite(fromTime) || !Number.isFinite(toTime) || fromTime > toTime || toTime - fromTime > 30 * 24 * 60 * 60 * 1000) {
+      return Response.json(
+        { error: "다운로드 범위는 시작일과 종료일을 포함한 최대 1개월로 선택해주세요." },
+        { status: 400 },
+      );
+    }
+
     const month = await DB.prepare(
       `SELECT rate_date, currency, rate, base_currency, collected_at
        FROM daily_rates
-       WHERE rate_date >= date(?, '-30 days') AND rate_date <= ?
+       WHERE rate_date >= ? AND rate_date <= ?
        ORDER BY rate_date ASC, currency ASC`,
     )
-      .bind(latestDate, latestDate)
+      .bind(fromValue, toDate)
       .all<RateRecord & { rate_date: string }>();
 
     const rows = [
@@ -72,7 +96,7 @@ export async function GET(request: Request) {
     return new Response(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": 'attachment; filename="global-fx-daily-last-30-days.csv"',
+        "Content-Disposition": `attachment; filename="global-fx-daily-${fromValue}-to-${toDate}.csv"`,
         "Cache-Control": "no-store",
       },
     });
