@@ -49,6 +49,41 @@ const currencyMeta: Record<string, { name: string; flag: string }> = {
   ZAR: { name: "남아공 랜드", flag: "🇿🇦" },
 };
 
+const currencyRegions: Record<string, string> = {
+  AED: "AE", AFN: "AF", ALL: "AL", AMD: "AM", ANG: "CW", AOA: "AO", ARS: "AR", AUD: "AU", AWG: "AW", AZN: "AZ",
+  BAM: "BA", BBD: "BB", BDT: "BD", BGN: "BG", BHD: "BH", BIF: "BI", BMD: "BM", BND: "BN", BOB: "BO", BSD: "BS",
+  BTN: "BT", BWP: "BW", BYN: "BY", BZD: "BZ", CAD: "CA", CDF: "CD", CHF: "CH", CLP: "CL", CNY: "CN", COP: "CO",
+  CRC: "CR", CUC: "CU", CUP: "CU", CVE: "CV", CZK: "CZ", DJF: "DJ", DKK: "DK", DOP: "DO", DZD: "DZ", EGP: "EG",
+  ERN: "ER", ETB: "ET", EUR: "EU", FJD: "FJ", FKP: "FK", GBP: "GB", GEL: "GE", GHS: "GH", GIP: "GI", GMD: "GM",
+  GNF: "GN", GTQ: "GT", GYD: "GY", HKD: "HK", HNL: "HN", HRK: "HR", HTG: "HT", HUF: "HU", IDR: "ID", ILS: "IL",
+  INR: "IN", IQD: "IQ", IRR: "IR", ISK: "IS", JMD: "JM", JOD: "JO", JPY: "JP", KES: "KE", KGS: "KG", KHR: "KH",
+  KMF: "KM", KPW: "KP", KRW: "KR", KWD: "KW", KYD: "KY", KZT: "KZ", LAK: "LA", LBP: "LB", LKR: "LK", LRD: "LR",
+  LSL: "LS", LYD: "LY", MAD: "MA", MDL: "MD", MGA: "MG", MKD: "MK", MMK: "MM", MNT: "MN", MOP: "MO", MRU: "MR",
+  MUR: "MU", MVR: "MV", MWK: "MW", MXN: "MX", MYR: "MY", MZN: "MZ", NAD: "NA", NGN: "NG", NIO: "NI", NOK: "NO",
+  NPR: "NP", NZD: "NZ", OMR: "OM", PAB: "PA", PEN: "PE", PGK: "PG", PHP: "PH", PKR: "PK", PLN: "PL", PYG: "PY",
+  QAR: "QA", RON: "RO", RSD: "RS", RUB: "RU", RWF: "RW", SAR: "SA", SBD: "SB", SCR: "SC", SDG: "SD", SEK: "SE",
+  SGD: "SG", SHP: "SH", SLE: "SL", SLL: "SL", SOS: "SO", SRD: "SR", SSP: "SS", STN: "ST", SVC: "SV", SYP: "SY",
+  SZL: "SZ", THB: "TH", TJS: "TJ", TMT: "TM", TND: "TN", TOP: "TO", TRY: "TR", TTD: "TT", TWD: "TW", TZS: "TZ",
+  UAH: "UA", UGX: "UG", USD: "US", UYU: "UY", UZS: "UZ", VES: "VE", VND: "VN", VUV: "VU", WST: "WS", XAF: "CM",
+  XCD: "AG", XOF: "SN", XPF: "PF", YER: "YE", ZAR: "ZA", ZMW: "ZM", ZWG: "ZW", ZWL: "ZW",
+};
+
+const specialCurrencyNames: Record<string, string> = {
+  BTC: "비트코인", CNH: "중국 위안(역외)", CLF: "칠레 환산 단위", XAG: "은", XAU: "금", XPD: "팔라듐", XPT: "백금",
+};
+
+function flagFromRegion(region: string | undefined) {
+  if (!region || region === "EU") return region === "EU" ? "🇪🇺" : "🌐";
+  return [...region.toUpperCase()].map((letter) => String.fromCodePoint(127397 + letter.charCodeAt(0))).join("");
+}
+
+function getCurrencyMeta(currency: string) {
+  const known = currencyMeta[currency];
+  if (known) return known;
+  const displayName = specialCurrencyNames[currency] ?? new Intl.DisplayNames(["ko-KR"], { type: "currency" }).of(currency);
+  return { name: displayName && displayName !== currency ? displayName : `${currency} 통화`, flag: flagFromRegion(currencyRegions[currency]) };
+}
+
 const highlights = ["KRW", "EUR", "JPY", "CNY"];
 
 function formatRate(value: number) {
@@ -121,7 +156,7 @@ export default function Home() {
   const rows = useMemo(() => {
     return (snapshot?.latest ?? [])
       .filter(({ currency }) => {
-        const meta = currencyMeta[currency];
+        const meta = getCurrencyMeta(currency);
         const value = `${currency} ${meta?.name ?? ""}`.toLowerCase();
         return value.includes(query.trim().toLowerCase());
       })
@@ -268,7 +303,7 @@ export default function Home() {
             const previousKrw = previousMap.get("KRW") ?? krwRate;
             const previous = previousRaw ? convertedRate(previousRaw, base, previousKrw) : null;
             const change = current && previous ? ((current - previous) / previous) * 100 : null;
-            const meta = currencyMeta[currency];
+            const meta = getCurrencyMeta(currency);
             return (
               <article className="rateCard" key={currency}>
                 <div className="currencyTitle">
@@ -426,7 +461,7 @@ export default function Home() {
             </thead>
             <tbody>
               {rows.slice(0, 40).map((row) => {
-                const meta = currencyMeta[row.currency] ?? { flag: "◉", name: "글로벌 통화" };
+                const meta = getCurrencyMeta(row.currency);
                 return (
                   <tr key={row.currency}>
                     <td><span className="tableFlag">{meta.flag}</span><strong>{meta.name}</strong></td>
