@@ -70,7 +70,8 @@ Global FX Daily는 전 세계 통화의 일별 환율을 수집하고, 대한민
 - 원천 데이터: [Open Exchange Rates](https://openexchangerates.org/)
 - API 엔드포인트: `https://openexchangerates.org/api/latest.json`
 - API 기준 통화: USD
-- 표시 기준 통화: KRW 기본, USD 선택 가능
+- 주요 카드·계산기 기준 통화: KRW 기본, USD 선택 가능
+- 전체 통화 목록: 원천 API 기준인 1 USD 환율로 고정 표시
 - 저장 단위: 기준일 + 통화 코드별 1건
 - 저장 시각: Asia/Seoul 기준 매일 09:05 이후
 - API 무료 요금제의 갱신 주기가 시간 단위일 수 있으므로, 실제 응답 시각과 수집 시각을 함께 기록한다.

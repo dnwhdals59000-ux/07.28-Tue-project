@@ -123,16 +123,14 @@ export default function Home() {
         return value.includes(query.trim().toLowerCase());
       })
       .map((item) => {
-        const current = convertedRate(item.rate, base, krwRate);
+        // The full currency table is always normalized to the API's USD base.
+        const current = item.rate;
         const previousRaw = previousMap.get(item.currency);
-        const previousKrw = previousMap.get("KRW") ?? krwRate;
-        const previous = previousRaw
-          ? convertedRate(previousRaw, base, previousKrw)
-          : null;
+        const previous = previousRaw ?? null;
         const change = previous ? ((current - previous) / previous) * 100 : null;
         return { ...item, displayRate: current, change };
       });
-  }, [snapshot, query, base, krwRate, previousMap]);
+  }, [snapshot, query, previousMap]);
 
   const chartData = useMemo(() => {
     const grouped = new Map<string, { selected?: number; krw?: number }>();
@@ -380,7 +378,7 @@ export default function Home() {
         <div className="tableWrap">
           <table>
             <thead>
-              <tr><th>통화</th><th>코드</th><th>1 {base} 환율</th><th>전일 대비</th><th>기준일</th></tr>
+              <tr><th>통화</th><th>코드</th><th>1 USD 환율</th><th>전일 대비</th><th>기준일</th></tr>
             </thead>
             <tbody>
               {rows.slice(0, 40).map((row) => {
