@@ -372,6 +372,15 @@ export default function Home() {
                 <span>↓</span>
                 엑셀 다운로드
               </a>
+              <a
+                className="excelButton monthButton"
+                href="/api/rates/export?range=month"
+                download
+                title="최근 30일간 저장된 일별 환율을 한 번에 다운로드"
+              >
+                <span>↓</span>
+                최근 1개월
+              </a>
             </div>
           </div>
         </div>

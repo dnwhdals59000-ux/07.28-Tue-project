@@ -177,6 +177,8 @@ select { border: 1px solid var(--line); border-radius: 8px; background: #fafbf8;
 .excelButton:hover { background: var(--ink); }
 .excelButton span { color: var(--lime); font-size: 16px; line-height: 1; }
 .excelButton.disabled { opacity: .45; pointer-events: none; }
+.monthButton { background: var(--ink); }
+.monthButton:hover { background: var(--green); }
 .tableWrap { background: white; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; position: relative; }
 table { width: 100%; border-collapse: collapse; }
 th { text-align: left; padding: 14px 18px; background: #fafbf8; color: var(--muted); font-size: 10px; letter-spacing: .05em; border-bottom: 1px solid var(--line); }

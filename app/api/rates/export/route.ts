@@ -23,6 +23,61 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const DB = (env as unknown as RuntimeEnv).DB;
   const url = new URL(request.url);
+  const range = url.searchParams.get("range");
+
+  if (range === "month") {
+    const latestDate = (
+      await DB.prepare("SELECT MAX(rate_date) AS rate_date FROM daily_rates")
+        .first<{ rate_date: string | null }>()
+    )?.rate_date;
+
+    if (!latestDate) {
+      return Response.json(
+        { error: "다운로드할 환율 데이터가 없습니다." },
+        { status: 404 },
+      );
+    }
+
+    const month = await DB.prepare(
+      `SELECT rate_date, currency, rate, base_currency, collected_at
+       FROM daily_rates
+       WHERE rate_date >= date(?, '-30 days') AND rate_date <= ?
+       ORDER BY rate_date ASC, currency ASC`,
+    )
+      .bind(latestDate, latestDate)
+      .all<RateRecord & { rate_date: string }>();
+
+    const rows = [
+      [
+        "기준일",
+        "통화코드",
+        "기준통화",
+        "1 USD 환율",
+        "수집시각(UTC)",
+        "데이터 출처",
+      ],
+      ...month.results.map((item) => [
+        item.rate_date,
+        item.currency,
+        item.base_currency,
+        formatNumber(item.rate, 8),
+        item.collected_at,
+        "Open Exchange Rates",
+      ]),
+    ];
+    const csv = `\uFEFF${rows
+      .map((row) => row.map((cell) => csvCell(cell)).join(","))
+      .join("\r\n")}`;
+
+    return new Response(csv, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": 'attachment; filename="global-fx-daily-last-30-days.csv"',
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
   const requestedDate = url.searchParams.get("date");
   const safeDate =
     requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)
