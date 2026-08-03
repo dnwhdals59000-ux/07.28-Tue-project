@@ -67,7 +67,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [query, setQuery] = useState("");
-  const [base, setBase] = useState<"USD" | "KRW">("KRW");
+  const [base, setBase] = useState<"USD" | "KRW">("USD");
   const [days, setDays] = useState(30);
   const [selectedCurrency, setSelectedCurrency] = useState("USD");
   const [amount, setAmount] = useState("1000");
